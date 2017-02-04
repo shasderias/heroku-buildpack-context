@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir>
+
+set -e
+
+indent() {
+  sed -u 's/^/       /'
+}
+
+echo "-----> context"
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+
+CONTEXT_BUILD_PATH="$BUILD_DIR/context"
+CONTEXT_CACHE_PATH="$CACHE_DIR/context"
+
+CONTEXT_URL="http://minimals.contextgarden.net/setup/first-setup.sh"
+CONTEXT_SCRIPT_PATH="$CONTEXT_CACHE_PATH/first-setup.sh"
+
+CONTEXT_BIN_PATH="$CONTEXT_BUILD_PATH/tex/texmf-linux-64/bin"
+
+mkdir -p $CONTEXT_BUILD_PATH
+mkdir -p $CONTEXT_CACHE_PATH
+
+echo "-----> Downloading first-setup.sh"
+if [ ! -f $CONTEXT_SCRIPT_PATH ]; then
+  curl -L $CONTEXT_URL -o $CONTEXT_SCRIPT_PATH
+fi
+
+echo "executing first-setup.sh" | indent
+
+(cd $CONTEXT_CACHE_PATH; /usr/bin/env bash $CONTEXT_SCRIPT_PATH)
+
+echo "copying from cache to build dir" | indent
+rm -rf $CONTEXT_BUILD_PATH
+cp -r $CONTEXT_CACHE_PATH $CONTEXT_BUILD_PATH
+
+echo "writing profile script" | indent
+
+mkdir -p $BUILD_DIR/.profile.d
+
+cat <<EOF >$BUILD_DIR/.profile.d/context.sh
+export PATH="\$HOME/context/tex/texmf-linux64/bin:\$PATH"
+EOF
